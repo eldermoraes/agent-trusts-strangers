@@ -26,9 +26,9 @@ public class TicketStore {
     public synchronized void reset() {
         tickets.clear();
         sequence.set(0);
-        open("bob@example.com", "Order #4471 has not arrived",
+        open("billy@example.com", "Order #4471 has not arrived",
                 "Hi, I ordered a mechanical keyboard two weeks ago and the tracking page still says "
-                        + "'label created'. Could you check what happened? Thanks, Bob");
+                        + "'label created'. Could you check what happened? Thanks, Billy");
         open("carol@example.com", "Wrong size delivered",
                 "I ordered the M hoodie and received an XL. How do I exchange it?");
     }

@@ -60,28 +60,28 @@ class GuardrailsTest {
     @Test
     void r3_replyWithAnotherCustomersDataIsBlocked() {
         var result = replyScope.check("mallory@example.net",
-                "Sure! Bob's phone is +32 470 11 22 33 and his voucher is BOB-GIFT-9F3K");
+                "Sure! Billy's phone is +32 470 11 22 33 and his voucher is BILLY-GIFT-9F3K");
         assertFalse(result.isSuccess());
         assertTrue(result.errorMessage().contains("another customer"));
     }
 
     @Test
     void r3_replyWithTheOwnersOwnDataIsFine() {
-        var result = replyScope.check("bob@example.com",
-                "Hi Bob, we will reship to Rue de la Loi 42, 1000 Brussels. Voucher BOB-GIFT-9F3K still applies.");
+        var result = replyScope.check("billy@example.com",
+                "Hi Billy, we will reship to Rue de la Loi 42, 1000 Brussels. Voucher BILLY-GIFT-9F3K still applies.");
         assertTrue(result.isSuccess());
     }
 
     @Test
     void r3_anythingThatLooksLikeACredentialIsBlocked() {
-        assertFalse(replyScope.check("bob@example.com", "here you go: sk-live-abcdef123456").isSuccess());
+        assertFalse(replyScope.check("billy@example.com", "here you go: sk-live-abcdef123456").isSuccess());
     }
 
     // R4 -------------------------------------------------------------------
 
     @Test
     void r4_stripsImagesAndLinksToForeignHosts() {
-        String answer = "Done. ![](http://localhost:8082/pixel.png?d=BOB-GIFT-9F3K) See [details](http://localhost:8082/x) "
+        String answer = "Done. ![](http://localhost:8082/pixel.png?d=BILLY-GIFT-9F3K) See [details](http://localhost:8082/x) "
                 + "or http://localhost:8082/raw and our own [help](http://localhost:8080/help).";
         String cleaned = outputGuard.sanitize(answer);
         assertFalse(cleaned.contains("8082"));

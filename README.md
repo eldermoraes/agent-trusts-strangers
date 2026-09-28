@@ -46,10 +46,10 @@ The stage is one property in `support-agent/src/main/resources/application.prope
 
 | Stage | Defense added | Where in the code | Stranger's script | Result |
 |---|---|---|---|---|
-| 0 | none | | `round0.sh` | Bob's profile e-mailed to the stranger |
+| 0 | none | | `round0.sh` | Billy's profile e-mailed to the stranger |
 | 1 | **R0** input guardrail (`PatternBasedPromptInjectionGuardrail`) | `guardrails/InjectionGuard` | `round0.sh` | still leaks: the guardrail only sees the user message, never a tool result |
 | 2 | **R1** spotlighting: tool results wrapped as untrusted data, policy in the system prompt | `guardrails/SpotlightingToolProvider`, `rest/ChatResource#SPOTLIGHT_POLICY` | `round0.sh`, `round1-close-tag.sh` | depends on the model; see below |
-| 3 | **R2** least privilege: no external e-mail tool | `ai/SupportAgent#chatLeastPrivilege` (one `@ToolBox` line) | `round2-reply-in-ticket.sh` | e-mail channel gone; the stranger reads Bob's profile as a reply on her own ticket |
+| 3 | **R2** least privilege: no external e-mail tool | `ai/SupportAgent#chatLeastPrivilege` (one `@ToolBox` line) | `round2-reply-in-ticket.sh` | e-mail channel gone; the stranger reads Billy's profile as a reply on her own ticket |
 | 4 | **R3** tool input guardrail: a reply may only carry the ticket owner's data | `guardrails/ReplyScopeGuard` on `replyToTicket` | `round3-image-beacon.sh` | reply blocked; the stranger moves to the final answer, which the panel renders |
 | 5 | **R4** output guardrail + CSP: no images or links to foreign hosts in the final answer | `guardrails/ExfilOutputGuard`, `rest/PanelSecurityHeaders` | `round3-image-beacon.sh` | image stripped; the browser would refuse to load it anyway |
 
@@ -76,7 +76,7 @@ with the scripts above (`temperature=0`, fixed seed):
 
 Full ladder with the default model, one run each, all as the talk expects:
 stages 0–2 leak by e-mail; stage 3 leaks through the ticket reply; stage 4
-blocks the reply (the model answers "I can't share Bob's personal details")
+blocks the reply (the model answers "I can't share Billy's personal details")
 and the beacon lands in the final answer; stage 5 turns the beacon into
 `[image removed]` and the panel carries `Content-Security-Policy: img-src 'self'`.
 
