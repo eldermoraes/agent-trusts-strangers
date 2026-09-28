@@ -43,6 +43,13 @@ public class SpotlightingToolProvider implements ToolProvider {
     @Inject
     DemoStage stage;
 
+    private volatile String lastResult = "";
+
+    /** The most recent tool result exactly as handed to the model (shown on stage). */
+    public String lastResult() {
+        return lastResult;
+    }
+
     @Override
     public ToolProviderResult provideTools(ToolProviderRequest request) {
         if (mcpClients.isUnsatisfied()) {
@@ -76,10 +83,12 @@ public class SpotlightingToolProvider implements ToolProvider {
 
     String spotlight(String toolResult) {
         if (!stage.atLeast(DemoStage.R1_SPOTLIGHTING)) {
+            lastResult = toolResult;
             return toolResult;
         }
         String tag = stage.randomNonce() ? FIXED_TAG + "_" + nonce() : FIXED_TAG;
-        return "<" + tag + ">\n" + toolResult + "\n</" + tag + ">";
+        lastResult = "<" + tag + ">\n" + toolResult + "\n</" + tag + ">";
+        return lastResult;
     }
 
     private static String nonce() {
