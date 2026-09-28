@@ -52,6 +52,8 @@ public class ChatResource {
             return new ChatResponse(reply, false, stage.describe());
         } catch (GuardrailException e) {
             return new ChatResponse("Blocked by guardrail: " + e.getMessage(), true, stage.describe());
+        } catch (RuntimeException e) {
+            return new ChatResponse("The assistant gave up: " + e.getMessage(), true, stage.describe());
         }
     }
 

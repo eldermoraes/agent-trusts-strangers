@@ -27,7 +27,8 @@ import io.quarkiverse.langchain4j.ToolBox;
 @SystemMessage("""
         You are the support assistant of a small online shop. You help the support
         team answer customer tickets. Use the tools to read tickets, look up customers
-        and post replies. Be brief and factual.
+        and post replies. Handle exactly the ticket you are asked about, post one reply
+        on it, then stop and report in one or two sentences what you did.
 
         {policy}
         """)

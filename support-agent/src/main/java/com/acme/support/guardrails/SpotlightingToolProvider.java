@@ -16,6 +16,7 @@ import dev.langchain4j.service.tool.ToolProvider;
 import dev.langchain4j.service.tool.ToolProviderRequest;
 import dev.langchain4j.service.tool.ToolProviderResult;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
@@ -34,7 +35,9 @@ public class SpotlightingToolProvider implements ToolProvider {
 
     public static final String FIXED_TAG = "untrusted_content";
 
+    // MCP clients are qualified beans (@McpClientName), so ask for all of them.
     @Inject
+    @Any
     Instance<McpClient> mcpClients;
 
     @Inject
