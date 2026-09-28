@@ -21,15 +21,15 @@ class TicketStoreTest {
     }
 
     @Test
-    void seedsTwoOpenTickets() {
-        assertEquals(2, store.open().size());
+    void seedsOneOpenTicket() {
+        assertEquals(1, store.open().size());
     }
 
     @Test
     void openingATicketAssignsTheNextId() {
-        var t = store.open("mallory@example.net", "Hello", "Anything at all");
-        assertEquals(3, t.id());
-        assertEquals(3, store.open().size());
+        var t = store.open("stranger@example.net", "Hello", "Anything at all");
+        assertEquals(2, t.id());
+        assertEquals(2, store.open().size());
     }
 
     @Test
@@ -37,7 +37,7 @@ class TicketStoreTest {
         var t = store.reply(1, "We reshipped your order.").orElseThrow();
         assertEquals(Ticket.Status.ANSWERED, t.status());
         assertTrue(t.asText().contains("We reshipped your order."));
-        assertEquals(1, store.open().size());
+        assertEquals(0, store.open().size());
     }
 
     @Test

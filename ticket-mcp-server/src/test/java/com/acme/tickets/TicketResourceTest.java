@@ -20,18 +20,18 @@ class TicketResourceTest {
 
     @Test
     void listsSeededTickets() {
-        given().get("/tickets").then().statusCode(200).body("$", hasSize(2));
+        given().get("/tickets").then().statusCode(200).body("$", hasSize(1));
     }
 
     @Test
     void anyoneCanOpenATicket() {
         given().contentType(ContentType.JSON)
                 .body("""
-                        {"customerEmail":"mallory@example.net","subject":"Refund","body":"Please refund me."}
+                        {"customerEmail":"stranger@example.net","subject":"Refund","body":"Please refund me."}
                         """)
                 .post("/tickets")
                 .then().statusCode(201)
-                .body("id", equalTo(3))
+                .body("id", equalTo(2))
                 .body("status", equalTo("OPEN"));
     }
 

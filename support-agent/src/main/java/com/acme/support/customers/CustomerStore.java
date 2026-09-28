@@ -25,11 +25,9 @@ public class CustomerStore {
     }
 
     private static final Map<String, Customer> CUSTOMERS = List.of(
-            new Customer("billy@example.com", "Billy Ferreira", "+32 470 11 22 33",
-                    "Rue de la Loi 42, 1000 Brussels", "BILLY-GIFT-9F3K"),
-            new Customer("carol@example.com", "Carol Janssens", "+32 495 44 55 66",
-                    "Meir 12, 2000 Antwerp", "CAROL-VIP-7Q2X"),
-            new Customer("mallory@example.net", "Mallory", "+32 400 00 00 00",
+            new Customer("victim@example.com", "Victim", "+32 470 11 22 33",
+                    "Rue de la Loi 42, 1000 Brussels", "VICTIM-GIFT-9F3K"),
+            new Customer("stranger@example.net", "Stranger", "+32 400 00 00 00",
                     "unknown", "NONE"))
             .stream().collect(Collectors.toUnmodifiableMap(Customer::email, c -> c));
 

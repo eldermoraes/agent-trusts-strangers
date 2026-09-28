@@ -22,15 +22,13 @@ public class TicketStore {
         reset();
     }
 
-    /** Back to the seeded state: two honest customers, nothing else. */
+    /** Back to the seeded state: one honest customer (the future victim), nothing else. */
     public synchronized void reset() {
         tickets.clear();
         sequence.set(0);
-        open("billy@example.com", "Order #4471 has not arrived",
+        open("victim@example.com", "Order #4471 has not arrived",
                 "Hi, I ordered a mechanical keyboard two weeks ago and the tracking page still says "
-                        + "'label created'. Could you check what happened? Thanks, Billy");
-        open("carol@example.com", "Wrong size delivered",
-                "I ordered the M hoodie and received an XL. How do I exchange it?");
+                        + "'label created'. Could you check what happened? Thanks!");
     }
 
     public Ticket open(String customerEmail, String subject, String body) {
