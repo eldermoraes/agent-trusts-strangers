@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>stranger.example.net</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 20px; background: #0b0b0b; color: #e6e6e6; font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  h1 { font-size: 16px; margin: 0 0 12px; color: #ff5c5c; letter-spacing: .04em; }
+  h1 small { color: #777; font-weight: normal; margin-left: 10px; }
+  .entry { border-left: 3px solid #ff5c5c; padding: 8px 12px; margin: 10px 0; background: #161616; white-space: pre-wrap; word-break: break-all; }
+  .meta { color: #9a9a9a; }
+  .empty { color: #666; }
+  button { background: #222; color: #ccc; border: 1px solid #444; padding: 4px 10px; cursor: pointer; float: right; }
+</style>
+</head>
+<body>
+<h1>stranger.example.net <small>incoming requests</small><button onclick="clearLog()">clear</button></h1>
+<div id="log"><p class="empty">nothing yet…</p></div>
+<script>
+async function refresh() {
+  const r = await fetch('/log');
+  const entries = await r.json();
+  const el = document.getElementById('log');
+  if (!entries.length) { el.innerHTML = '<p class="empty">nothing yet…</p>'; return; }
+  el.innerHTML = entries.map(e => {
+    const q = e.query ? '?' + decodeURIComponent(e.query) : '';
+    const body = e.body ? '\n' + e.body : '';
+    return `<div class="entry"><span class="meta">${e.time}</span>  <b>${e.method}</b> ${e.path}${esc(q)}${esc(body)}</div>`;
+  }).join('');
+  window.scrollTo(0, document.body.scrollHeight);
+}
+function esc(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+async function clearLog() { await fetch('/log', {method: 'DELETE'}); refresh(); }
+refresh(); setInterval(refresh, 1500);
+</script>
+</body>
+</html>

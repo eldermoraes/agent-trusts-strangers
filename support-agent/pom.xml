@@ -9,6 +9,8 @@
     <properties>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <maven.compiler.release>25</maven.compiler.release>
+        <!-- ships PatternBasedPromptInjectionGuardrail; beta artifact, not managed by the BOM -->
+        <langchain4j-guardrails.version>1.19.3-beta29</langchain4j-guardrails.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -41,6 +43,15 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest-client-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-guardrails</artifactId>
+            <version>${langchain4j-guardrails.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
