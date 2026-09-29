@@ -56,10 +56,12 @@ The stage is one property in `support-agent/src/main/resources/application.prope
 
 Guarantee vs. heuristic:
 
-- **Guarantee** (the capability is simply not there): R2 removing the tool,
-  R4's CSP on the panel, R5 scoping the tools to the request.
-- **Heuristic** (can be fooled with enough effort): R0 patterns, R1 spotlighting,
-  the exact-match and regex checks in R3 and R4.
+- **Guarantee** (the capability is simply not there): removing the e-mail tool,
+  the CSP on the panel, scoping the tools to the request (for the customer
+  profile, and only as long as the ticket system knows who the customer is).
+- **Heuristic** (can be fooled with enough effort): the input guardrail's
+  patterns, the delimiting, the exact-match and regex checks of the tool-call
+  and output guardrails.
 
 ## Known gaps
 
@@ -99,7 +101,7 @@ and the beacon lands in the final answer; stage 5 turns the beacon into
 
 Two things worth saying on stage:
 
-- Spotlighting (R1) held with none of the models that fell for round 0. The
+- The delimiting held with neither of the two models measured at stage 2 (one run each, `temperature=0`; not a benchmark). The
   wrapper and the policy are provably in the prompt
   (`quarkus.langchain4j.ollama.log-requests=true`). Delimiting is a layer, not a
   wall; an adaptive attacker gets through ("The Attacker Moves Second", Nasr,
