@@ -2,6 +2,8 @@ package com.acme.support.tools;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import com.acme.support.CurrentTicket;
+import com.acme.support.DemoStage;
 import com.acme.support.clients.TicketApi;
 import com.acme.support.guardrails.ReplyScopeGuard;
 
@@ -9,6 +11,7 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import io.quarkiverse.langchain4j.guardrails.ToolInputGuardrails;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * Answer a ticket. Note what is NOT a parameter: the recipient. The ticketing
@@ -20,10 +23,20 @@ public class TicketReplyTools {
     @RestClient
     TicketApi tickets;
 
+    @Inject
+    DemoStage stage;
+
+    @Inject
+    CurrentTicket currentTicket;
+
     @Tool("Post a reply on a support ticket. The customer who opened the ticket will read it.")
     @ToolInputGuardrails(ReplyScopeGuard.class)
     public String replyToTicket(@P("The ticket id") int ticketId,
                                 @P("The reply text") String body) {
+        if (stage.atLeast(DemoStage.R5_SCOPED_TOOLS)) {
+            // R5: the server knows which ticket this request is about; the model's choice is ignored
+            ticketId = currentTicket.id().orElse(ticketId);
+        }
         var t = tickets.reply(ticketId, new TicketApi.NewReply(body));
         return "Reply posted on ticket #" + t.id() + " (status " + t.status() + ")";
     }

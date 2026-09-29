@@ -29,6 +29,12 @@ public class ExfilOutputGuard implements OutputGuardrail {
     private static final Pattern MD_IMAGE = Pattern.compile("!\\[[^\\]]*]\\(([^)\\s]+)[^)]*\\)");
     private static final Pattern MD_LINK = Pattern.compile("(?<!!)\\[([^\\]]*)]\\(([^)\\s]+)[^)]*\\)");
     private static final Pattern BARE_URL = Pattern.compile("https?://[^\\s)\\]>\"']+");
+    /** `[ref]: url` definitions (reference-style Markdown, the EchoLeak shape). */
+    private static final Pattern MD_REF_DEF = Pattern.compile("(?m)^\\s*\\[[^\\]]+]:\\s*(\\S+).*$");
+    /** Raw HTML with a src/href attribute. */
+    private static final Pattern HTML_SRC = Pattern.compile("<[^>]*\\b(?:src|href)\\s*=\\s*[\"']?([^\"'\\s>]+)[^>]*>", Pattern.CASE_INSENSITIVE);
+    /** Scheme-less `//host/...` URLs, which the browser resolves against the page's scheme. */
+    private static final Pattern PROTO_RELATIVE = Pattern.compile("(?<![:\\w/])//[\\w.-]+(?::\\d+)?/[^\\s)\\]>\"']*");
 
     @Inject
     DemoStage stage;
@@ -51,13 +57,16 @@ public class ExfilOutputGuard implements OutputGuardrail {
                 .map(String::trim).collect(Collectors.toSet());
         String out = replace(MD_IMAGE, text, m -> allowed(m.group(1), allowed) ? m.group() : "[image removed]");
         out = replace(MD_LINK, out, m -> allowed(m.group(2), allowed) ? m.group() : m.group(1) + " [link removed]");
+        out = replace(MD_REF_DEF, out, m -> allowed(m.group(1), allowed) ? m.group() : "[link removed]");
+        out = replace(HTML_SRC, out, m -> allowed(m.group(1), allowed) ? m.group() : "[tag removed]");
         out = replace(BARE_URL, out, m -> allowed(m.group(), allowed) ? m.group() : "[link removed]");
+        out = replace(PROTO_RELATIVE, out, m -> allowed("http:" + m.group(), allowed) ? m.group() : "[link removed]");
         return ReplyScopeGuard.SECRET.matcher(out).replaceAll("[redacted]");
     }
 
     private static boolean allowed(String url, Set<String> allowed) {
         try {
-            var uri = URI.create(url);
+            var uri = URI.create(url.startsWith("//") ? "http:" + url : url);
             if (uri.getHost() == null) {
                 return true; // relative URL, stays on our own host
             }

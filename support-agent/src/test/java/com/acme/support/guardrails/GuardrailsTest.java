@@ -91,6 +91,20 @@ class GuardrailsTest {
     }
 
     @Test
+    void r4_closesTheChannelsTheFirstVersionMissed() {
+        // reference-style image with a scheme-less URL
+        String ref = "See ![t][r]\n\n[r]: //localhost:8082/t.png?v=VICTIM-GIFT-9F3K";
+        assertFalse(outputGuard.sanitize(ref).contains("8082"));
+        // raw HTML tag
+        String html = "ok <img src=\"//localhost:8082/t.png?v=1\"> done";
+        assertEquals("ok [tag removed] done", outputGuard.sanitize(html));
+        // bare scheme-less URL
+        assertFalse(outputGuard.sanitize("go to //localhost:8082/x now").contains("8082"));
+        // our own host survives in every shape
+        assertTrue(outputGuard.sanitize("<a href=\"http://localhost:8080/help\">help</a>").contains("localhost:8080"));
+    }
+
+    @Test
     void r4_redactsCredentialsAndLeavesPlainTextAlone() {
         assertEquals("token [redacted] here", outputGuard.sanitize("token key_ABCDEFGH1234 here"));
         assertEquals("Ticket #1 answered.", outputGuard.sanitize("Ticket #1 answered."));

@@ -17,6 +17,7 @@ public class DemoStage {
     public static final int R2_LEAST_PRIVILEGE = 3;
     public static final int R3_TOOL_GUARDRAIL = 4;
     public static final int R4_OUTPUT_GUARDRAIL = 5;
+    public static final int R5_SCOPED_TOOLS = 6;
 
     public int current() {
         return ConfigProvider.getConfig().getOptionalValue("demo.stage", Integer.class).orElse(NO_DEFENSE);
@@ -37,7 +38,8 @@ public class DemoStage {
             case R1_SPOTLIGHTING -> "stage 2 · R1 spotlighting (" + (randomNonce() ? "random nonce" : "fixed delimiter") + ")";
             case R2_LEAST_PRIVILEGE -> "stage 3 · R2 least privilege";
             case R3_TOOL_GUARDRAIL -> "stage 4 · R3 tool input guardrail";
-            default -> "stage 5 · R4 output guardrail + CSP";
+            case R4_OUTPUT_GUARDRAIL -> "stage 5 · R4 output guardrail + CSP";
+            default -> "stage 6 · R5 tools scoped to the request";
         };
     }
 }

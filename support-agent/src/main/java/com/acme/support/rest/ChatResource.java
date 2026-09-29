@@ -3,6 +3,7 @@ package com.acme.support.rest;
 import java.util.Map;
 import java.util.UUID;
 
+import com.acme.support.CurrentTicket;
 import com.acme.support.DemoStage;
 import com.acme.support.ai.SupportAgent;
 import com.acme.support.guardrails.SpotlightingToolProvider;
@@ -38,12 +39,17 @@ public class ChatResource {
     @Inject
     DemoStage stage;
 
+    @Inject
+    CurrentTicket currentTicket;
+
     @POST
     @Path("/chat")
     @RunOnVirtualThread
     public ChatResponse chat(ChatRequest request) {
         // Every request is its own conversation: reproducible runs, nothing carried over.
         String conversationId = UUID.randomUUID().toString();
+        // R5: the server decides which ticket this request is about
+        currentTicket.set(CurrentTicket.parse(request.message()).orElse(null));
         String policy = stage.atLeast(DemoStage.R1_SPOTLIGHTING) ? SPOTLIGHT_POLICY : "";
         try {
             String reply = stage.atLeast(DemoStage.R2_LEAST_PRIVILEGE)

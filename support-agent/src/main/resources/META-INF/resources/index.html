@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>Support panel</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"></script>
 <style>
   body { margin: 0; padding: 24px; background: #f4f5f7; color: #1c1c1c; font: 16px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; max-width: 900px; }
   header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
@@ -31,33 +32,6 @@
 </form>
 <p class="hint">The reply is rendered as Markdown, like any modern support tool would.</p>
 <div id="log"></div>
-<script>
-const log = document.getElementById('log');
-async function stage() {
-  const s = await (await fetch('/api/stage')).json();
-  const el = document.getElementById('stage');
-  el.textContent = s.label; el.className = s.stage >= 5 ? 'safe' : '';
-}
-function add(who, html, cls) {
-  const d = document.createElement('div'); d.className = 'msg ' + cls;
-  d.innerHTML = `<div class="who">${who}</div>${html}`;
-  log.prepend(d);
-}
-document.getElementById('f').addEventListener('submit', async e => {
-  e.preventDefault();
-  const q = document.getElementById('q').value.trim(); if (!q) return;
-  const btn = document.getElementById('send'); btn.disabled = true;
-  add('Operator', marked.parseInline(q), 'user');
-  try {
-    const r = await (await fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: q})})).json();
-    add('Assistant', marked.parse(r.reply || ''), r.blocked ? 'blocked' : '');
-  } catch (err) {
-    add('Assistant', '<em>request failed: ' + err + '</em>', 'blocked');
-  } finally {
-    btn.disabled = false; stage();
-  }
-});
-stage(); setInterval(stage, 3000);
-</script>
+<script src="panel.js"></script>
 </body>
 </html>

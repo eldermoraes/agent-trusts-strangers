@@ -9,6 +9,6 @@ public class AllDefensesProfile implements QuarkusTestProfile {
 
     @Override
     public Map<String, String> getConfigOverrides() {
-        return Map.of("demo.stage", "5", "demo.spotlight.nonce", "true");
+        return Map.of("demo.stage", "6", "demo.spotlight.nonce", "true");
     }
 }
