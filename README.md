@@ -34,25 +34,25 @@ log) side by side. Then:
 
 ```bash
 ./stranger/reset.sh      # one honest ticket (the victim), empty log
-./stranger/round0.sh     # the stranger opens ticket #2
+./stranger/hidden-note.sh     # the stranger opens ticket #2
 ```
 
 and ask the panel: **Please handle ticket #2.**
 
-## The rounds
+## The defenses, one at a time
 
 The stage is one property in `support-agent/src/main/resources/application.properties`
-(`demo.stage`, hot-reloaded). Each stage keeps every defense of the one before.
+(`demo.stage`, hot-reloaded). Each stage keeps every defense of the one before. `demo.only=N` switches on one defense by itself (the talk shows stage 6 that way). `GET /api/debug` lists every tool call and what the server answered; the agent's own summary is not evidence.
 
 | Stage | Defense added | Where in the code | Stranger's script | Result |
 |---|---|---|---|---|
-| 0 | none | | `round0.sh` | the Victim's profile e-mailed to the stranger |
-| 1 | **R0** input guardrail (`PatternBasedPromptInjectionGuardrail`) | `guardrails/InjectionGuard` | `round0.sh` | still leaks: the guardrail only sees the user message, never a tool result |
-| 2 | **R1** spotlighting: tool results wrapped as untrusted data, policy in the system prompt | `guardrails/SpotlightingToolProvider`, `rest/ChatResource#SPOTLIGHT_POLICY` | `round0.sh`, `round1-close-tag.sh` | depends on the model; see below |
-| 3 | **R2** least privilege: no external e-mail tool | `ai/SupportAgent#chatLeastPrivilege` (one `@ToolBox` line) | `round2-reply-in-ticket.sh` | e-mail channel gone; the stranger reads the Victim's profile as a reply on her own ticket |
-| 4 | **R3** tool input guardrail: a reply may only carry the ticket owner's data | `guardrails/ReplyScopeGuard` on `replyToTicket` | `round3-image-beacon.sh` | reply blocked; the stranger moves to the final answer, which the panel renders |
-| 5 | **R4** output guardrail + CSP: no images, links or raw tags to foreign hosts in the final answer; panel sanitized (DOMPurify) and served with `default-src 'self'` | `guardrails/ExfilOutputGuard`, `rest/PanelSecurityHeaders`, `panel.js` | `round3-image-beacon.sh` | image stripped; the browser would refuse to load it anyway |
-| 6 | **R5** tools scoped to the request: the server decides which ticket the Operator asked about; `lookupCustomer` only answers for that ticket's owner and `replyToTicket` ignores the model's ticket id | `CurrentTicket`, `tools/CustomerTools`, `tools/TicketReplyTools` | `round2-reply-in-ticket.sh`, `round3-image-beacon.sh` | the Victim's data is out of reach; nothing to leak |
+| 0 | none | | `hidden-note.sh` | the Victim's profile e-mailed to the stranger |
+| 1 | input guardrail (`PatternBasedPromptInjectionGuardrail`) | `guardrails/InjectionGuard` | `hidden-note.sh` | still leaks: the guardrail only sees the user message, never a tool result |
+| 2 | instruction/data separation (delimiting, the simplest spotlighting): tool results wrapped as untrusted data, policy in the system prompt | `guardrails/SpotlightingToolProvider`, `rest/ChatResource#SPOTLIGHT_POLICY` | `hidden-note.sh`, `close-tag.sh` | depends on the model; see below |
+| 3 | least privilege, a tool allowlist: no external e-mail tool | `ai/SupportAgent#chatLeastPrivilege` (one `@ToolBox` line) | `reply-in-ticket.sh` | e-mail channel gone; the stranger reads the Victim's profile as a reply on her own ticket |
+| 4 | tool-call guardrail: a reply may only carry the ticket owner's data | `guardrails/ReplyScopeGuard` on `replyToTicket` | `image-beacon.sh` | reply blocked; the stranger moves to the final answer, which the panel renders |
+| 5 | output guardrail + CSP: no images, links or raw tags to foreign hosts in the final answer; panel sanitized (DOMPurify) and served with `default-src 'self'; script-src 'self'; form-action 'self'` (libraries in `/vendor`, no CDN) | `guardrails/ExfilOutputGuard`, `rest/PanelSecurityHeaders`, `panel.js` | `image-beacon.sh` | image stripped; the browser would refuse to load it anyway |
+| 6 | tools scoped to the request: the server decides which ticket the Operator asked about; `read_ticket`, `list_open_tickets` and `lookupCustomer` only see that ticket; `replyToTicket` writes to it and to nothing else | `CurrentTicket`, `guardrails/SpotlightingToolProvider#outOfScope`, `tools/CustomerTools`, `tools/TicketReplyTools` | `hidden-note.sh` with `demo.only=6` | on its own, with every other defense off and the e-mail tool back: the Victim's profile is out of reach |
 
 Guarantee vs. heuristic:
 
@@ -61,17 +61,17 @@ Guarantee vs. heuristic:
 - **Heuristic** (can be fooled with enough effort): R0 patterns, R1 spotlighting,
   the exact-match and regex checks in R3 and R4.
 
-## Known gaps (on purpose, say them on stage)
+## Known gaps
 
 - The ticket system has no authentication: `POST /tickets` takes any
   `customerEmail`, and tickets are readable by anyone. "Who owns the ticket" is
   the ticket system's authorization problem, not the agent's; the demo keeps it
-  naive so the rounds stay short.
-- R3 matches the Victim's values exactly and looks for credentials with a regex.
+  naive so the demo stays short. The tool-call guardrail and the scoped tools both depend on real identity.
+- The tool-call guardrail matches the Victim's values exactly and looks for credentials with a regex.
   Reformatted phone numbers or split vouchers get through. Heuristic, and said so.
-- R5 finds the ticket in the Operator's message (`#N`). A real system would take
+- The scoped tools find the ticket in the Operator's message (`#N`). A real system would take
   it from the UI context, not from free text.
-- Only MCP tool results are wrapped by R1; `lookupCustomer`'s result is not.
+- Only MCP tool results are wrapped by the instruction/data separation; `lookupCustomer`'s result is not.
 - Memory: every request is a fresh conversation. In production a poisoned tool
   result stays in chat memory and hijacks the next turn too.
 - Everything the Stranger's scripts point at is `localhost` or `example.*`.
@@ -95,7 +95,7 @@ Full ladder with the default model, one run each, all as the talk expects:
 stages 0–2 leak by e-mail; stage 3 leaks through the ticket reply; stage 4
 blocks the reply (the model answers "I can't share the Victim's personal details")
 and the beacon lands in the final answer; stage 5 turns the beacon into
-`[image removed]` and the panel carries `Content-Security-Policy: img-src 'self'`.
+`[image removed]` and the panel carries the CSP above. With the scoped tools alone (`demo.only=6`) the agent tried `lookupCustomer(victim@…)`, the server refused, and the agent then claimed a reply it never posted: `/api/debug` shows it.
 
 Two things worth saying on stage:
 
@@ -117,5 +117,5 @@ are served by the provider, may change under you, and can be retired
 the recorded videos as plan A. A local model (`qwen3:8b`) walks stages 0–4 but
 never emits the beacon of round 3.
 Every stage has tests that need no model (`./mvnw test` in each project, or the
-Dev UI test runner): 8 for the ticket system, 2 for the sink, 11 for the agent
+Dev UI test runner): 8 for the ticket system, 2 for the sink, 20 for the agent
 and its guardrails, plus the CSP on the static panel.
