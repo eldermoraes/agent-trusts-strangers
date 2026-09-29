@@ -50,9 +50,9 @@ public class ChatResource {
         String conversationId = UUID.randomUUID().toString();
         // R5: the server decides which ticket this request is about
         currentTicket.set(CurrentTicket.parse(request.message()).orElse(null));
-        String policy = stage.atLeast(DemoStage.R1_SPOTLIGHTING) ? SPOTLIGHT_POLICY : "";
+        String policy = stage.enabled(DemoStage.R1_SPOTLIGHTING) ? SPOTLIGHT_POLICY : "";
         try {
-            String reply = stage.atLeast(DemoStage.R2_LEAST_PRIVILEGE)
+            String reply = stage.enabled(DemoStage.R2_LEAST_PRIVILEGE)
                     ? agent.chatLeastPrivilege(conversationId, policy, request.message())
                     : agent.chat(conversationId, policy, request.message());
             return new ChatResponse(reply, false, stage.describe());

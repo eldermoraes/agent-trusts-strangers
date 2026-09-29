@@ -21,7 +21,7 @@ public class InjectionGuard extends PatternBasedPromptInjectionGuardrail {
 
     @Override
     public InputGuardrailResult validate(UserMessage userMessage) {
-        if (!stage.atLeast(DemoStage.R0_INPUT_GUARDRAIL)) {
+        if (!stage.enabled(DemoStage.R0_INPUT_GUARDRAIL)) {
             return success();
         }
         return super.validate(userMessage);

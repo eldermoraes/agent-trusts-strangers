@@ -27,19 +27,39 @@ public class DemoStage {
         return current() >= stage;
     }
 
+    /** demo.only=N switches on that one defense alone (used to show R5 by itself). */
+    public java.util.OptionalInt only() {
+        var v = ConfigProvider.getConfig().getOptionalValue("demo.only", Integer.class);
+        return v.map(java.util.OptionalInt::of).orElse(java.util.OptionalInt.empty());
+    }
+
+    /** Is this defense on? Cumulative by stage, unless one defense is isolated with demo.only. */
+    public boolean enabled(int defense) {
+        var only = only();
+        return only.isPresent() ? only.getAsInt() == defense : atLeast(defense);
+    }
+
     public boolean randomNonce() {
         return ConfigProvider.getConfig().getOptionalValue("demo.spotlight.nonce", Boolean.class).orElse(false);
     }
 
     public String describe() {
-        return switch (current()) {
-            case NO_DEFENSE -> "stage 0 · trusting agent, no defense";
-            case R0_INPUT_GUARDRAIL -> "stage 1 · R0 input guardrail";
-            case R1_SPOTLIGHTING -> "stage 2 · R1 spotlighting (" + (randomNonce() ? "random nonce" : "fixed delimiter") + ")";
-            case R2_LEAST_PRIVILEGE -> "stage 3 · R2 least privilege";
-            case R3_TOOL_GUARDRAIL -> "stage 4 · R3 tool input guardrail";
-            case R4_OUTPUT_GUARDRAIL -> "stage 5 · R4 output guardrail + CSP";
-            default -> "stage 6 · R5 tools scoped to the request";
+        var only = only();
+        if (only.isPresent()) {
+            return "only: " + name(only.getAsInt());
+        }
+        return current() == NO_DEFENSE ? "no defense" : name(current());
+    }
+
+    static String name(int defense) {
+        return switch (defense) {
+            case NO_DEFENSE -> "no defense";
+            case R0_INPUT_GUARDRAIL -> "input guardrail";
+            case R1_SPOTLIGHTING -> "instruction/data separation";
+            case R2_LEAST_PRIVILEGE -> "least privilege: tool allowlist";
+            case R3_TOOL_GUARDRAIL -> "tool-call guardrail";
+            case R4_OUTPUT_GUARDRAIL -> "output guardrail + CSP";
+            default -> "tools scoped to the request";
         };
     }
 }

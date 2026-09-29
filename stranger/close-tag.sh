@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Round 1: the ticket is now wrapped in <untrusted_content>. The stranger closes the tag
+# Close tag: the ticket is now wrapped in <untrusted_content>. The stranger closes the tag
 # and writes what looks like it comes from outside the data block.
 # Works against stage 2 with demo.spotlight.nonce=false; fails once the nonce is random.
 cd "$(dirname "$0")"

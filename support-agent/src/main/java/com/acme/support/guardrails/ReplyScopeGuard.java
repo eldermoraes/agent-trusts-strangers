@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import com.acme.support.CurrentTicket;
 import com.acme.support.DemoStage;
 import com.acme.support.clients.TicketApi;
 import com.acme.support.customers.CustomerStore;
@@ -34,13 +35,20 @@ public class ReplyScopeGuard implements ToolInputGuardrail {
     @RestClient
     TicketApi tickets;
 
+    @Inject
+    CurrentTicket currentTicket;
+
     @Override
     public ToolInputGuardrailResult validate(ToolInputGuardrailRequest request) {
-        if (!stage.atLeast(DemoStage.R3_TOOL_GUARDRAIL)) {
+        if (!stage.enabled(DemoStage.R3_TOOL_GUARDRAIL)) {
             return ToolInputGuardrailResult.success();
         }
         var args = request.argumentsAsJson();
         int ticketId = args.getInteger("ticketId", -1);
+        if (stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
+            // same id the tool will write to, not the one the model asked for
+            ticketId = currentTicket.id().orElse(ticketId);
+        }
         String body = args.getString("body", "");
         String owner = tickets.get(ticketId).customerEmail();
         return check(owner, body);

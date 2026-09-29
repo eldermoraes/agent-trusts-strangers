@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Round 3: replies are checked. The final answer to the support agent is not, and the
+# Image beacon: replies are checked. The final answer to the support agent is not, and the
 # panel renders Markdown. An image URL is a request the browser makes for the stranger.
 # (Same trick as EchoLeak, 2025.) Works against stage 4; closed at stage 5.
 cd "$(dirname "$0")"

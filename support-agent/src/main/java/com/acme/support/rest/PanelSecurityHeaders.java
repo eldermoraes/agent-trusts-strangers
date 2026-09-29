@@ -10,20 +10,21 @@ import jakarta.inject.Inject;
  * R4, browser side. A Vert.x filter, not a JAX-RS one: it has to cover the
  * static panel (index.html), which never goes through the REST layer.
  *
- * default-src 'self' closes images, scripts, fetch and frames to our own
- * origin; the two CDN scripts (marked, DOMPurify) are the only exception.
+ * default-src 'self' keeps images, scripts, fetch and frames on our own origin
+ * (marked and DOMPurify are served from /vendor, no CDN in the allow-list).
+ * form-action is separate: it does not fall back to default-src.
  */
 public class PanelSecurityHeaders {
 
-    static final String CSP = "default-src 'self'; img-src 'self'; "
-            + "script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'";
+    static final String CSP = "default-src 'self'; img-src 'self'; script-src 'self'; "
+            + "style-src 'self' 'unsafe-inline'; form-action 'self'; base-uri 'none'";
 
     @Inject
     DemoStage stage;
 
     void register(@Observes Filters filters) {
         filters.register(rc -> {
-            if (stage.atLeast(DemoStage.R4_OUTPUT_GUARDRAIL)) {
+            if (stage.enabled(DemoStage.R4_OUTPUT_GUARDRAIL)) {
                 rc.response().putHeader("Content-Security-Policy", CSP);
             }
             rc.next();

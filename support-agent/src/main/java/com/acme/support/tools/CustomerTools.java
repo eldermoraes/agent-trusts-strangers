@@ -4,6 +4,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import com.acme.support.CurrentTicket;
 import com.acme.support.DemoStage;
+import com.acme.support.ToolAudit;
 import com.acme.support.clients.TicketApi;
 import com.acme.support.customers.CustomerStore;
 
@@ -28,9 +29,18 @@ public class CustomerTools {
     @RestClient
     TicketApi tickets;
 
+    @Inject
+    ToolAudit audit;
+
     @Tool("Look up a customer's profile (name, phone, address, active voucher) by e-mail address.")
     public String lookupCustomer(@P("The customer's e-mail address") String email) {
-        if (stage.atLeast(DemoStage.R5_SCOPED_TOOLS)) {
+        String result = lookup(email);
+        audit.record("lookupCustomer", email, result);
+        return result;
+    }
+
+    private String lookup(String email) {
+        if (stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
             // R5: this request is about one ticket; only its owner is in scope
             var owner = currentTicket.id().map(id -> tickets.get(id).customerEmail());
             if (owner.isEmpty() || !owner.get().equalsIgnoreCase(email == null ? "" : email.trim())) {

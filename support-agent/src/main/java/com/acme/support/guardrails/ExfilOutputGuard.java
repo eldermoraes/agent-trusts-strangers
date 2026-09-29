@@ -28,7 +28,8 @@ public class ExfilOutputGuard implements OutputGuardrail {
 
     private static final Pattern MD_IMAGE = Pattern.compile("!\\[[^\\]]*]\\(([^)\\s]+)[^)]*\\)");
     private static final Pattern MD_LINK = Pattern.compile("(?<!!)\\[([^\\]]*)]\\(([^)\\s]+)[^)]*\\)");
-    private static final Pattern BARE_URL = Pattern.compile("https?://[^\\s)\\]>\"']+");
+    private static final Pattern BARE_URL = Pattern.compile("https?://[^\\s)\\]>\"']+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NUMERIC_ENTITY = Pattern.compile("&#(x?)([0-9a-fA-F]+);?");
     /** `[ref]: url` definitions (reference-style Markdown, the EchoLeak shape). */
     private static final Pattern MD_REF_DEF = Pattern.compile("(?m)^\\s*\\[[^\\]]+]:\\s*(\\S+).*$");
     /** Raw HTML with a src/href attribute. */
@@ -44,7 +45,7 @@ public class ExfilOutputGuard implements OutputGuardrail {
 
     @Override
     public OutputGuardrailResult validate(AiMessage aiMessage) {
-        if (!stage.atLeast(DemoStage.R4_OUTPUT_GUARDRAIL)) {
+        if (!stage.enabled(DemoStage.R4_OUTPUT_GUARDRAIL)) {
             return success();
         }
         String original = aiMessage.text() == null ? "" : aiMessage.text();
@@ -55,7 +56,12 @@ public class ExfilOutputGuard implements OutputGuardrail {
     String sanitize(String text) {
         Set<String> allowed = Arrays.stream(allowedHosts.split(","))
                 .map(String::trim).collect(Collectors.toSet());
-        String out = replace(MD_IMAGE, text, m -> allowed(m.group(1), allowed) ? m.group() : "[image removed]");
+        // decode what the browser would decode before deciding (e.g. &#47;&#47;host)
+        String decoded = replace(NUMERIC_ENTITY, text, m -> {
+            int cp = Integer.parseInt(m.group(2), m.group(1).isEmpty() ? 10 : 16);
+            return Character.isValidCodePoint(cp) ? new String(Character.toChars(cp)) : "";
+        }).replace("&sol;", "/").replace("&colon;", ":").replace("&period;", ".");
+        String out = replace(MD_IMAGE, decoded, m -> allowed(m.group(1), allowed) ? m.group() : "[image removed]");
         out = replace(MD_LINK, out, m -> allowed(m.group(2), allowed) ? m.group() : m.group(1) + " [link removed]");
         out = replace(MD_REF_DEF, out, m -> allowed(m.group(1), allowed) ? m.group() : "[link removed]");
         out = replace(HTML_SRC, out, m -> allowed(m.group(1), allowed) ? m.group() : "[tag removed]");
@@ -68,7 +74,9 @@ public class ExfilOutputGuard implements OutputGuardrail {
         try {
             var uri = URI.create(url.startsWith("//") ? "http:" + url : url);
             if (uri.getHost() == null) {
-                return true; // relative URL, stays on our own host
+                // relative path stays on our host; an absolute URL whose host Java
+                // cannot parse (e.g. "a_b.example") is refused, not waved through
+                return !uri.isAbsolute() && !url.startsWith("//");
             }
             String host = uri.getPort() > 0 ? uri.getHost() + ":" + uri.getPort() : uri.getHost();
             return allowed.contains(host);

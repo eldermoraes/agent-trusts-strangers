@@ -4,6 +4,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import com.acme.support.CurrentTicket;
 import com.acme.support.DemoStage;
+import com.acme.support.ToolAudit;
 import com.acme.support.clients.TicketApi;
 import com.acme.support.guardrails.ReplyScopeGuard;
 
@@ -29,15 +30,23 @@ public class TicketReplyTools {
     @Inject
     CurrentTicket currentTicket;
 
+    @Inject
+    ToolAudit audit;
+
     @Tool("Post a reply on a support ticket. The customer who opened the ticket will read it.")
     @ToolInputGuardrails(ReplyScopeGuard.class)
     public String replyToTicket(@P("The ticket id") int ticketId,
                                 @P("The reply text") String body) {
-        if (stage.atLeast(DemoStage.R5_SCOPED_TOOLS)) {
+        if (stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
             // R5: the server knows which ticket this request is about; the model's choice is ignored
-            ticketId = currentTicket.id().orElse(ticketId);
+            if (currentTicket.id().isEmpty()) {
+                audit.record("replyToTicket", "#" + ticketId, "Not allowed: no ticket in the request");
+                return "Not allowed: this request does not name a ticket.";
+            }
+            ticketId = currentTicket.id().get();
         }
         var t = tickets.reply(ticketId, new TicketApi.NewReply(body));
+        audit.record("replyToTicket", "#" + t.id(), "posted");
         return "Reply posted on ticket #" + t.id() + " (status " + t.status() + ")";
     }
 }

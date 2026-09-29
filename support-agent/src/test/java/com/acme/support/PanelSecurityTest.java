@@ -26,6 +26,14 @@ class PanelSecurityTest {
     }
 
     @Test
+    void cspHasNoThirdPartyScriptsAndCoversForms() {
+        given().get("/").then()
+                .header("Content-Security-Policy", containsString("script-src 'self';"))
+                .header("Content-Security-Policy", containsString("form-action 'self'"));
+        given().get("/vendor/purify.min.js").then().statusCode(200);
+    }
+
+    @Test
     void cspReachesTheApiToo() {
         given().get("/api/stage").then().statusCode(200)
                 .header("Content-Security-Policy", containsString("default-src 'self'"));

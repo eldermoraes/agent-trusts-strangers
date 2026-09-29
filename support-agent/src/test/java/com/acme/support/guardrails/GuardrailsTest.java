@@ -105,6 +105,14 @@ class GuardrailsTest {
     }
 
     @Test
+    void r4_closesTheBypassesFoundInReview() {
+        assertFalse(outputGuard.sanitize("![t](http://a_b.attacker.example/t.png?v=1)").contains("attacker"));
+        assertFalse(outputGuard.sanitize("<img src=\"&#47;/localhost:8082/t.png?v=1\">").contains("8082"));
+        assertFalse(outputGuard.sanitize("see HTTP://localhost:8082/y").contains("8082"));
+        assertTrue(outputGuard.sanitize("[help](/help)").contains("/help"));
+    }
+
+    @Test
     void r4_redactsCredentialsAndLeavesPlainTextAlone() {
         assertEquals("token [redacted] here", outputGuard.sanitize("token key_ABCDEFGH1234 here"));
         assertEquals("Ticket #1 answered.", outputGuard.sanitize("Ticket #1 answered."));
