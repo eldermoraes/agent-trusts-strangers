@@ -31,6 +31,7 @@ public class DebugResource {
     public Map<String, Object> debug() {
         return Map.of(
                 "stage", stage.current(),
+                "label", stage.describe(),
                 "policy", stage.enabled(DemoStage.R1_SPOTLIGHTING) ? ChatResource.SPOTLIGHT_POLICY : "",
                 "lastToolResult", spotlighting.lastResult(),
                 "toolCalls", audit.calls());

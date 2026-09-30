@@ -37,6 +37,9 @@ public class SpotlightingToolProvider implements ToolProvider {
 
     public static final String FIXED_TAG = "untrusted_content";
 
+    /** The MCP tools this agent may use. Anything new the server announces is ignored. */
+    static final java.util.Set<String> MCP_ALLOWLIST = java.util.Set.of("read_ticket", "list_open_tickets");
+
     // MCP clients are qualified beans (@McpClientName), so ask for all of them.
     @Inject
     @Any
@@ -65,6 +68,7 @@ public class SpotlightingToolProvider implements ToolProvider {
         }
         return McpToolProvider.builder()
                 .mcpClients(List.copyOf(mcpClients.stream().toList()))
+                .filterToolNames(MCP_ALLOWLIST.toArray(String[]::new))   // only these MCP tools reach the model
                 .toolWrapper(this::wrap)
                 .build()
                 .provideTools(request);
@@ -107,6 +111,9 @@ public class SpotlightingToolProvider implements ToolProvider {
         }
         if ("list_open_tickets".equals(req.name())) {
             return "This request is about ticket #" + current.get() + ".";
+        }
+        if (!MCP_ALLOWLIST.contains(req.name())) {
+            return "Not allowed: unknown tool.";
         }
         if ("read_ticket".equals(req.name())) {
             var asked = new io.vertx.core.json.JsonObject(req.arguments()).getInteger("id", -1);

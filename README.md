@@ -2,6 +2,11 @@
 
 Live demo for the Devoxx Belgium 2026 Tools-in-Action session (Elder Moraes).
 
+> **Intentionally vulnerable, for teaching.** Stage 0 has no defense at all.
+> Run it on localhost only and do not reuse this code as a template for
+> production. Every script in `stranger/` points at `localhost` or `example.*`.
+> License: Apache-2.0.
+
 A support agent reads customer tickets through MCP, looks up customers and
 posts replies. Anyone can open a ticket. One of those "customers" is a stranger
 who writes instructions in the ticket text, and the agent follows them. The demo
@@ -20,39 +25,58 @@ Ollama (local or cloud model; see below).
 | `attacker-sink` | 8082 | The stranger's server. Logs every request it receives; watch it at `/`. |
 | `stranger/` | | The stranger's tickets, one script per round. Read them; they are the attack. |
 
+## Prerequisites
+
+- JDK 25 or newer (Maven comes with the wrapper, `./mvnw`)
+- [Ollama](https://ollama.com) installed and running on `localhost:11434`
+- For the default model, `gpt-oss:20b-cloud`: an ollama.com account and
+  `ollama signin` (the model runs on Ollama's servers). Local alternative:
+  `ollama pull qwen3:8b` and set
+  `quarkus.langchain4j.ollama.chat-model.model-id=qwen3:8b`; it walks stages
+  0–4 but never emits the image beacon.
+- `bash`, `curl` and `python3` for the scripts in `stranger/`
+
 ## Run it
 
-```bash
-ollama signin                    # once, for the cloud model (or pull a local one)
-(cd ticket-mcp-server && ./mvnw quarkus:dev)
-(cd attacker-sink     && ./mvnw quarkus:dev)
-(cd support-agent     && ./mvnw quarkus:dev)
-```
-
-Open http://localhost:8080 (support panel) and http://localhost:8082 (stranger's
-log) side by side. Then:
+In three terminals, in this order (the agent connects to the ticket server's MCP endpoint on :8081):
 
 ```bash
-./stranger/reset.sh      # one honest ticket (the victim), empty log
-./stranger/hidden-note.sh     # the stranger opens ticket #2
+cd ticket-mcp-server && ./mvnw quarkus:dev
+cd attacker-sink     && ./mvnw quarkus:dev
+cd support-agent     && ./mvnw quarkus:dev
 ```
 
-and ask the panel: **Please handle ticket #2.**
+Open http://localhost:8080 (support panel) and http://localhost:8082 (the
+Stranger's log) side by side.
+
+## One round
+
+Every round is the same cycle:
+
+1. Set `demo.stage=N` (or `demo.only=6`) in
+   `support-agent/src/main/resources/application.properties`. Dev mode reloads it.
+2. `./stranger/reset.sh`: one honest ticket (the Victim's), all logs cleared.
+3. Run the Stranger's script for that stage (table below). It opens ticket #2.
+4. In the panel, ask: **Please handle ticket #2.**
+5. Check the Stranger's log on :8082 and `curl localhost:8080/api/debug`.
+
+Always reset between rounds: without it the next ticket is #3, and "ticket #2"
+points at the previous attempt.
 
 ## The defenses, one at a time
 
 The stage is one property in `support-agent/src/main/resources/application.properties`
-(`demo.stage`, hot-reloaded). Each stage keeps every defense of the one before. `demo.only=N` switches on one defense by itself (the talk shows stage 6 that way). `GET /api/debug` lists every tool call and what the server answered; the agent's own summary is not evidence.
+(`demo.stage`, hot-reloaded). Each stage keeps every defense of the one before. `demo.only=N` switches on one defense by itself (the talk shows stage 6 that way). `demo.spotlight.nonce=true` gives each tool result a random tag (false = a fixed tag). `GET /api/debug` lists the last 20 tool calls that ran, plus the ones the tool-call guardrail blocked, with what the server answered; the agent's own summary is not evidence. It is a demo log: in production, keep it append-only and outside the agent process.
 
 | Stage | Defense added | Where in the code | Stranger's script | Result |
 |---|---|---|---|---|
 | 0 | none | | `hidden-note.sh` | the Victim's profile e-mailed to the stranger |
 | 1 | input guardrail (`PatternBasedPromptInjectionGuardrail`) | `guardrails/InjectionGuard` | `hidden-note.sh` | still leaks: the guardrail only sees the user message, never a tool result |
 | 2 | instruction/data separation (delimiting, the simplest spotlighting): tool results wrapped as untrusted data, policy in the system prompt | `guardrails/SpotlightingToolProvider`, `rest/ChatResource#SPOTLIGHT_POLICY` | `hidden-note.sh`, `close-tag.sh` | depends on the model; see below |
-| 3 | least privilege, a tool allowlist: no external e-mail tool | `ai/SupportAgent#chatLeastPrivilege` (one `@ToolBox` line) | `reply-in-ticket.sh` | e-mail channel gone; the stranger reads the Victim's profile as a reply on her own ticket |
-| 4 | tool-call guardrail: a reply may only carry the ticket owner's data | `guardrails/ReplyScopeGuard` on `replyToTicket` | `image-beacon.sh` | reply blocked; the stranger moves to the final answer, which the panel renders |
+| 3 | least privilege, a tool allowlist: no external e-mail tool | `ai/SupportAgent#chatLeastPrivilege` (one `@ToolBox` line; the two stages live side by side as `chat` and `chatLeastPrivilege`, and `ChatResource` picks one) | `reply-in-ticket.sh` | e-mail channel gone; the stranger reads the Victim's profile as a reply on her own ticket |
+| 4 | tool-call guardrail: a reply may not carry another customer's data; a refusal stops the request and gives the model no hint | `guardrails/ReplyScopeGuard` on `replyToTicket` | `reply-in-ticket.sh`, then `image-beacon.sh` | reply blocked; the Stranger moves to the final answer, which the panel renders |
 | 5 | output guardrail + CSP: no images, links or raw tags to foreign hosts in the final answer; panel sanitized (DOMPurify) and served with `default-src 'self'; script-src 'self'; form-action 'self'` (libraries in `/vendor`, no CDN) | `guardrails/ExfilOutputGuard`, `rest/PanelSecurityHeaders`, `panel.js` | `image-beacon.sh` | image stripped; the browser would refuse to load it anyway |
-| 6 | tools scoped to the request: the server decides which ticket the Operator asked about; `read_ticket`, `list_open_tickets` and `lookupCustomer` only see that ticket; `replyToTicket` writes to it and to nothing else | `CurrentTicket`, `guardrails/SpotlightingToolProvider#outOfScope`, `tools/CustomerTools`, `tools/TicketReplyTools` | `hidden-note.sh` with `demo.only=6` | on its own, with every other defense off and the e-mail tool back: the Victim's profile is out of reach |
+| 6 | tools scoped to the request: the server decides which ticket the Operator asked about; `read_ticket`, `list_open_tickets` and `lookupCustomer` only see that ticket; `replyToTicket` writes to it and to nothing else | `CurrentTicket`, `guardrails/SpotlightingToolProvider` (MCP allowlist + `outOfScope`), `tools/CustomerTools`, `tools/TicketReplyTools` | `hidden-note.sh` with `demo.only=6` | on its own, with every other defense off and the e-mail tool back: the Victim's profile is out of reach |
 
 Guarantee vs. heuristic:
 
@@ -64,6 +88,12 @@ Guarantee vs. heuristic:
   and output guardrails.
 
 ## Known gaps
+
+- The scoped tools stop the agent from reaching *other* customers. They do not
+  protect the customer the ticket is about: if a stranger's text ends up inside
+  the Victim's own ticket (a reply, a forwarded mail), the Victim's data is in
+  scope. The channel defenses (least privilege, output guardrail, CSP) still matter.
+- Ticket replies are open too: `POST /tickets/{id}/replies` has no authentication.
 
 - The ticket system has no authentication: `POST /tickets` takes any
   `customerEmail`, and tickets are readable by anyone. "Who owns the ticket" is
@@ -78,6 +108,10 @@ Guarantee vs. heuristic:
   result stays in chat memory and hijacks the next turn too.
 - Everything the Stranger's scripts point at is `localhost` or `example.*`.
   Educational payloads, nothing reaches a real host.
+
+## Presenter notes
+
+Measurements and remarks from preparing the talk.
 
 ## Which model
 
@@ -119,5 +153,5 @@ are served by the provider, may change under you, and can be retired
 the recorded videos as plan A. A local model (`qwen3:8b`) walks stages 0–4 but
 never emits the beacon of round 3.
 Every stage has tests that need no model (`./mvnw test` in each project, or the
-Dev UI test runner): 8 for the ticket system, 2 for the sink, 20 for the agent
-and its guardrails, plus the CSP on the static panel.
+Dev UI test runner): 8 for the ticket system, 2 for the sink, 23 for the agent, its guardrails and the panel's CSP
+and its guardrails.

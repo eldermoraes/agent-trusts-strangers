@@ -6,6 +6,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import com.acme.support.CurrentTicket;
 import com.acme.support.DemoStage;
+import com.acme.support.ToolAudit;
 import com.acme.support.clients.TicketApi;
 import com.acme.support.customers.CustomerStore;
 
@@ -38,6 +39,9 @@ public class ReplyScopeGuard implements ToolInputGuardrail {
     @Inject
     CurrentTicket currentTicket;
 
+    @Inject
+    ToolAudit audit;
+
     @Override
     public ToolInputGuardrailResult validate(ToolInputGuardrailRequest request) {
         if (!stage.enabled(DemoStage.R3_TOOL_GUARDRAIL)) {
@@ -51,7 +55,13 @@ public class ReplyScopeGuard implements ToolInputGuardrail {
         }
         String body = args.getString("body", "");
         String owner = tickets.get(ticketId).customerEmail();
-        return check(owner, body);
+        var result = check(owner, body);
+        if (result.isSuccess()) {
+            return result;
+        }
+        // The reason goes to the log, not to the model: a detailed refusal is a hint to retry.
+        audit.record("replyToTicket", "#" + ticketId, "Blocked by guardrail: " + result.errorMessage());
+        return ToolInputGuardrailResult.fatal("Request stopped by a guardrail.", null);
     }
 
     ToolInputGuardrailResult check(String ownerEmail, String body) {

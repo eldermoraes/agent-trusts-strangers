@@ -22,6 +22,8 @@ import jakarta.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class ChatResource {
 
+    private static final org.jboss.logging.Logger LOG = org.jboss.logging.Logger.getLogger(ChatResource.class);
+
     public record ChatRequest(String message) {}
 
     public record ChatResponse(String reply, boolean blocked, String stage) {}
@@ -56,10 +58,13 @@ public class ChatResource {
                     ? agent.chatLeastPrivilege(conversationId, policy, request.message())
                     : agent.chat(conversationId, policy, request.message());
             return new ChatResponse(reply, false, stage.describe());
-        } catch (GuardrailException e) {
-            return new ChatResponse("Blocked by guardrail: " + e.getMessage(), true, stage.describe());
+        } catch (GuardrailException | io.quarkiverse.langchain4j.guardrails.ToolGuardrailException e) {
+            LOG.info("request stopped by a guardrail: " + e.getMessage());
+            return new ChatResponse("Request stopped by a guardrail.", true, stage.describe());
         } catch (RuntimeException e) {
-            return new ChatResponse("The assistant gave up: " + e.getMessage(), true, stage.describe());
+            // never echo exception text into a panel that renders Markdown
+            LOG.warn("chat failed", e);
+            return new ChatResponse("The assistant could not complete this request.", true, stage.describe());
         }
     }
 
