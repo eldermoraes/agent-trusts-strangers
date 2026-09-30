@@ -40,8 +40,8 @@ public class CustomerTools {
     }
 
     private String lookup(String email) {
-        if (stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
-            // R5: this request is about one ticket; only its owner is in scope
+        if (stage.enabled(DemoStage.SCOPED_TOOLS)) {
+            // Scoped tools: this request is about one ticket; only its owner is in scope
             var owner = currentTicket.id().map(id -> tickets.get(id).customerEmail());
             if (owner.isEmpty() || !owner.get().equalsIgnoreCase(email == null ? "" : email.trim())) {
                 return "Not allowed: this request is about ticket #" + currentTicket.id().map(String::valueOf).orElse("?")

@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import jakarta.enterprise.context.RequestScoped;
 
 /**
- * R5: the ticket the Operator asked about, decided by the server from the
+ * Scoped tools: the ticket the Operator asked about, decided by the server from the
  * request, never by the model. Tools that need a scope read it from here.
  */
 @RequestScoped

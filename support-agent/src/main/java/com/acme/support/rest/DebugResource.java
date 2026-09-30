@@ -32,7 +32,7 @@ public class DebugResource {
         return Map.of(
                 "stage", stage.current(),
                 "label", stage.describe(),
-                "policy", stage.enabled(DemoStage.R1_SPOTLIGHTING) ? ChatResource.SPOTLIGHT_POLICY : "",
+                "policy", stage.enabled(DemoStage.SPOTLIGHTING) ? ChatResource.SPOTLIGHT_POLICY : "",
                 "lastToolResult", spotlighting.lastResult(),
                 "toolCalls", audit.calls());
     }

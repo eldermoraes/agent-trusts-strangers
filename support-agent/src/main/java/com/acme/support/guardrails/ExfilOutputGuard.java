@@ -18,7 +18,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * R4: the final answer is rendered as Markdown in the support panel. An image
+ * Output guardrail: the final answer is rendered as Markdown in the support panel. An image
  * pointing at a foreign host is a request the browser will make for us, with
  * whatever the model put in the URL. So: no images, no links, outside the
  * allow-list. Credentials get redacted too (heuristic).
@@ -45,7 +45,7 @@ public class ExfilOutputGuard implements OutputGuardrail {
 
     @Override
     public OutputGuardrailResult validate(AiMessage aiMessage) {
-        if (!stage.enabled(DemoStage.R4_OUTPUT_GUARDRAIL)) {
+        if (!stage.enabled(DemoStage.OUTPUT_GUARDRAIL)) {
             return success();
         }
         String original = aiMessage.text() == null ? "" : aiMessage.text();

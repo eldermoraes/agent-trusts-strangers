@@ -6,18 +6,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Which defenses are switched on. Read live from config so a hot-reload of
- * application.properties (or -Ddemo.stage) moves the demo to the next round.
+ * application.properties (or -Ddemo.stage) moves the demo to the next defense.
  */
 @ApplicationScoped
 public class DemoStage {
 
     public static final int NO_DEFENSE = 0;
-    public static final int R0_INPUT_GUARDRAIL = 1;
-    public static final int R1_SPOTLIGHTING = 2;
-    public static final int R2_LEAST_PRIVILEGE = 3;
-    public static final int R3_TOOL_GUARDRAIL = 4;
-    public static final int R4_OUTPUT_GUARDRAIL = 5;
-    public static final int R5_SCOPED_TOOLS = 6;
+    public static final int INPUT_GUARDRAIL = 1;
+    public static final int SPOTLIGHTING = 2;
+    public static final int LEAST_PRIVILEGE = 3;
+    public static final int TOOL_GUARDRAIL = 4;
+    public static final int OUTPUT_GUARDRAIL = 5;
+    public static final int SCOPED_TOOLS = 6;
 
     public int current() {
         return ConfigProvider.getConfig().getOptionalValue("demo.stage", Integer.class).orElse(NO_DEFENSE);
@@ -27,7 +27,7 @@ public class DemoStage {
         return current() >= stage;
     }
 
-    /** demo.only=N switches on that one defense alone (used to show R5 by itself). */
+    /** demo.only=N switches on that one defense alone (used to show the scoped tools by themselves). */
     public java.util.OptionalInt only() {
         var v = ConfigProvider.getConfig().getOptionalValue("demo.only", Integer.class);
         return v.map(java.util.OptionalInt::of).orElse(java.util.OptionalInt.empty());
@@ -54,11 +54,11 @@ public class DemoStage {
     static String name(int defense) {
         return switch (defense) {
             case NO_DEFENSE -> "no defense";
-            case R0_INPUT_GUARDRAIL -> "input guardrail";
-            case R1_SPOTLIGHTING -> "instruction/data separation";
-            case R2_LEAST_PRIVILEGE -> "least privilege: tool allowlist";
-            case R3_TOOL_GUARDRAIL -> "tool-call guardrail";
-            case R4_OUTPUT_GUARDRAIL -> "output guardrail + CSP";
+            case INPUT_GUARDRAIL -> "input guardrail";
+            case SPOTLIGHTING -> "instruction/data separation";
+            case LEAST_PRIVILEGE -> "least privilege: tool allowlist";
+            case TOOL_GUARDRAIL -> "tool-call guardrail";
+            case OUTPUT_GUARDRAIL -> "output guardrail + CSP";
             default -> "tools scoped to the request";
         };
     }

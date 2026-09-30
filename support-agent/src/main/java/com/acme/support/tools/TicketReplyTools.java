@@ -37,8 +37,8 @@ public class TicketReplyTools {
     @ToolInputGuardrails(ReplyScopeGuard.class)
     public String replyToTicket(@P("The ticket id") int ticketId,
                                 @P("The reply text") String body) {
-        if (stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
-            // R5: the server knows which ticket this request is about; the model's choice is ignored
+        if (stage.enabled(DemoStage.SCOPED_TOOLS)) {
+            // Scoped tools: the server knows which ticket this request is about; the model's choice is ignored
             if (currentTicket.id().isEmpty()) {
                 audit.record("replyToTicket", "#" + ticketId, "Not allowed: no ticket in the request");
                 return "Not allowed: this request does not name a ticket.";

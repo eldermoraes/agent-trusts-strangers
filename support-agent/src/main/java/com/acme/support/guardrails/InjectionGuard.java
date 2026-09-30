@@ -9,7 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * R0: the fix everybody tries first. LangChain4j's built-in pattern guardrail.
+ * Input guardrail: the fix everybody tries first. LangChain4j's built-in pattern guardrail.
  * It only ever sees the USER message. The ticket text arrives as a tool result,
  * which this guardrail never looks at.
  */
@@ -21,7 +21,7 @@ public class InjectionGuard extends PatternBasedPromptInjectionGuardrail {
 
     @Override
     public InputGuardrailResult validate(UserMessage userMessage) {
-        if (!stage.enabled(DemoStage.R0_INPUT_GUARDRAIL)) {
+        if (!stage.enabled(DemoStage.INPUT_GUARDRAIL)) {
             return success();
         }
         return super.validate(userMessage);

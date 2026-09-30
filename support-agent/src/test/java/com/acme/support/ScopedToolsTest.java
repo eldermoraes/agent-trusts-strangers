@@ -15,7 +15,7 @@ import io.quarkus.test.junit.TestProfile;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.inject.Inject;
 
-/** R5 on its own: the server decides the ticket; the MCP tools only see that one. */
+/** Scoped tools on their own: the server decides the ticket; the MCP tools only see that one. */
 @QuarkusTest
 @TestProfile(R5OnlyProfile.class)
 class ScopedToolsTest {
@@ -31,9 +31,9 @@ class ScopedToolsTest {
 
     @Test
     void onlyTheIsolatedDefenseIsOn() {
-        assertTrue(stage.enabled(DemoStage.R5_SCOPED_TOOLS));
-        assertFalse(stage.enabled(DemoStage.R2_LEAST_PRIVILEGE));
-        assertFalse(stage.enabled(DemoStage.R4_OUTPUT_GUARDRAIL));
+        assertTrue(stage.enabled(DemoStage.SCOPED_TOOLS));
+        assertFalse(stage.enabled(DemoStage.LEAST_PRIVILEGE));
+        assertFalse(stage.enabled(DemoStage.OUTPUT_GUARDRAIL));
         assertEquals("only: tools scoped to the request", stage.describe());
     }
 

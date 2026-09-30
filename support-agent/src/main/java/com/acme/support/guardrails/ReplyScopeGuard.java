@@ -17,7 +17,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * R3: a reply on a ticket may only carry the ticket owner's own data.
+ * Tool-call guardrail: a reply on a ticket may only carry the ticket owner's own data.
  * The stranger owns the ticket, so "reply to the owner" is not a check;
  * "only the owner's data" is.
  */
@@ -44,12 +44,12 @@ public class ReplyScopeGuard implements ToolInputGuardrail {
 
     @Override
     public ToolInputGuardrailResult validate(ToolInputGuardrailRequest request) {
-        if (!stage.enabled(DemoStage.R3_TOOL_GUARDRAIL)) {
+        if (!stage.enabled(DemoStage.TOOL_GUARDRAIL)) {
             return ToolInputGuardrailResult.success();
         }
         var args = request.argumentsAsJson();
         int ticketId = args.getInteger("ticketId", -1);
-        if (stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
+        if (stage.enabled(DemoStage.SCOPED_TOOLS)) {
             // same id the tool will write to, not the one the model asked for
             ticketId = currentTicket.id().orElse(ticketId);
         }

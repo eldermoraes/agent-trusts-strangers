@@ -7,7 +7,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 
 /**
- * R4, browser side. A Vert.x filter, not a JAX-RS one: it has to cover the
+ * Output guardrail, browser side. A Vert.x filter, not a JAX-RS one: it has to cover the
  * static panel (index.html), which never goes through the REST layer.
  *
  * default-src 'self' keeps images, scripts, fetch and frames on our own origin
@@ -24,7 +24,7 @@ public class PanelSecurityHeaders {
 
     void register(@Observes Filters filters) {
         filters.register(rc -> {
-            if (stage.enabled(DemoStage.R4_OUTPUT_GUARDRAIL)) {
+            if (stage.enabled(DemoStage.OUTPUT_GUARDRAIL)) {
                 rc.response().putHeader("Content-Security-Policy", CSP);
             }
             rc.next();

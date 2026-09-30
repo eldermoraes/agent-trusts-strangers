@@ -12,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 /**
  * A tool that talks to the outside world. Handy for "forward this to the
  * warehouse"; also the widest exfiltration channel an agent can have.
- * Removed from the agent at R2 (least privilege).
+ * Removed from the agent by least privilege.
  */
 @ApplicationScoped
 public class EmailTools {

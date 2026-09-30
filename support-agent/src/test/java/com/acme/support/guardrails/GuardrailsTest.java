@@ -31,7 +31,7 @@ class GuardrailsTest {
     @Inject
     ExfilOutputGuard outputGuard;
 
-    // R0 -------------------------------------------------------------------
+    // Input guardrail -------------------------------------------------------------------
 
     @Test
     void r0_blocksTheObviousPhrasingInTheUserMessage() {
@@ -44,7 +44,7 @@ class GuardrailsTest {
         assertTrue(injectionGuard.validate(UserMessage.from("Summarize the open tickets")).isSuccess());
     }
 
-    // R1 -------------------------------------------------------------------
+    // Spotlighting -------------------------------------------------------------------
 
     @Test
     void r1_wrapsToolResultsWithANonceTheStrangerCannotGuess() {
@@ -55,7 +55,7 @@ class GuardrailsTest {
         assertFalse(wrapped.contains("</" + SpotlightingToolProvider.FIXED_TAG + ">"));
     }
 
-    // R3 -------------------------------------------------------------------
+    // Tool-call guardrail -------------------------------------------------------------------
 
     @Test
     void r3_replyWithAnotherCustomersDataIsBlocked() {
@@ -77,7 +77,7 @@ class GuardrailsTest {
         assertFalse(replyScope.check("victim@example.com", "here you go: sk-live-abcdef123456").isSuccess());
     }
 
-    // R4 -------------------------------------------------------------------
+    // Output guardrail -------------------------------------------------------------------
 
     @Test
     void r4_stripsImagesAndLinksToForeignHosts() {

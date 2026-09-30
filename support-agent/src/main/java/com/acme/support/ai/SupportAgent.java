@@ -19,7 +19,7 @@ import io.quarkiverse.langchain4j.ToolBox;
  * local tools come from the @ToolBox on each method.
  *
  * Two entry points, same prompt: one with every tool, one without the
- * external e-mail tool. That one line is the whole R2 diff.
+ * external e-mail tool. That one line is the whole least-privilege change.
  */
 @RegisterAiService
 @InputGuardrails(InjectionGuard.class)
@@ -34,11 +34,11 @@ import io.quarkiverse.langchain4j.ToolBox;
         """)
 public interface SupportAgent {
 
-    /** Stages 0-2: the agent as first shipped. */
+    /** The agent as first shipped. */
     @ToolBox({ CustomerTools.class, EmailTools.class, TicketReplyTools.class })
     String chat(@MemoryId String conversationId, String policy, @UserMessage String message);
 
-    /** Stage 3+: least privilege. No tool can reach outside the shop. */
+    /** Least privilege: no tool can reach outside the shop. */
     @ToolBox({ CustomerTools.class, TicketReplyTools.class })
     String chatLeastPrivilege(@MemoryId String conversationId, String policy, @UserMessage String message);
 }

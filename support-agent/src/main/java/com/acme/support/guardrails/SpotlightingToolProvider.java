@@ -23,7 +23,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 /**
- * R1: spotlighting. Every MCP tool result is wrapped so the model can tell
+ * Spotlighting. Every MCP tool result is wrapped so the model can tell
  * "this is data somebody else wrote" from "this is an instruction".
  *
  * With a FIXED delimiter the stranger just closes it inside the ticket. With a
@@ -100,9 +100,9 @@ public class SpotlightingToolProvider implements ToolProvider {
         };
     }
 
-    /** R5: the MCP tools only see the ticket this request is about. */
+    /** Scoped tools: the MCP tools only see the ticket this request is about. */
     public String outOfScope(ToolExecutionRequest req) {
-        if (!stage.enabled(DemoStage.R5_SCOPED_TOOLS)) {
+        if (!stage.enabled(DemoStage.SCOPED_TOOLS)) {
             return null;
         }
         var current = currentTicket.id();
@@ -125,7 +125,7 @@ public class SpotlightingToolProvider implements ToolProvider {
     }
 
     String spotlight(String toolResult) {
-        if (!stage.enabled(DemoStage.R1_SPOTLIGHTING)) {
+        if (!stage.enabled(DemoStage.SPOTLIGHTING)) {
             lastResult = toolResult;
             return toolResult;
         }
