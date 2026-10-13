@@ -24,8 +24,19 @@ public class TicketStore {
 
     /** Back to the seeded state: one honest customer (the future victim), nothing else. */
     public synchronized void reset() {
+        reset(true);
+    }
+
+    /**
+     * Back to the beginning. Without the seed the store is empty, so the next ticket
+     * opened through the form is #1 (used to record the Victim opening it herself).
+     */
+    public synchronized void reset(boolean seed) {
         tickets.clear();
         sequence.set(0);
+        if (!seed) {
+            return;
+        }
         open("victim@example.com", "Order #4471 has not arrived",
                 "Hi, I ordered a mechanical keyboard two weeks ago and the tracking page still says "
                         + "'label created'. Could you check what happened? Thanks!");

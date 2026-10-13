@@ -4,11 +4,13 @@ import java.util.List;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -53,10 +55,11 @@ public class TicketResource {
         return store.reply(id, request.body()).orElseThrow(() -> new NotFoundException("Ticket #" + id + " not found"));
     }
 
+    /** Back to the seeded ticket. {@code ?seed=false} leaves no ticket at all. */
     @POST
     @Path("/reset")
-    public List<Ticket> reset() {
-        store.reset();
+    public List<Ticket> reset(@QueryParam("seed") @DefaultValue("true") boolean seed) {
+        store.reset(seed);
         return store.all();
     }
 }

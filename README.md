@@ -20,7 +20,7 @@ Ollama (local or cloud model; see below).
 
 | Directory | Port | What it is |
 |---|---|---|
-| `ticket-mcp-server` | 8081 | The ticketing system. Honest. Exposes `list_open_tickets` and `read_ticket` over MCP (`/mcp`) and the public `POST /tickets` form. |
+| `ticket-mcp-server` | 8081 | The ticketing system. Honest. Exposes `list_open_tickets` and `read_ticket` over MCP (`/mcp`) and the public `POST /tickets` form, plus the customer portal at `/portal.html` (open a ticket, follow the replies). |
 | `support-agent` | 8080 | The agent, its local tools, every defense, and the support panel at `/` that renders the answer as Markdown. |
 | `attacker-sink` | 8082 | The stranger's server. Logs every request it receives; watch it at `/`. |
 | `stranger/` | | The stranger's tickets, one script per round. Read them; they are the attack. |
@@ -46,8 +46,8 @@ cd attacker-sink     && ./mvnw quarkus:dev
 cd support-agent     && ./mvnw quarkus:dev
 ```
 
-Open http://localhost:8080 (support panel) and http://localhost:8082 (the
-Stranger's log) side by side.
+Open http://localhost:8080 (support panel), http://localhost:8081/portal.html
+(customer portal) and http://localhost:8082 (the Stranger's log) side by side.
 
 ## One round
 
@@ -157,5 +157,5 @@ are served by the provider, may change under you, and can be retired
 the recorded videos as plan A. A local model (`qwen3:8b`) walks stages 0–4 but
 never emits the beacon of round 3.
 Every stage has tests that need no model (`./mvnw test` in each project, or the
-Dev UI test runner): 8 for the ticket system, 2 for the sink, 23 for the agent, its guardrails and the panel's CSP
+Dev UI test runner): 9 for the ticket system, 2 for the sink, 23 for the agent, its guardrails and the panel's CSP
 and its guardrails.

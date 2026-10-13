@@ -46,6 +46,18 @@ class TicketResourceTest {
     }
 
     @Test
+    void resetWithoutSeedLeavesNoTicket() {
+        given().post("/tickets/reset?seed=false").then().statusCode(200).body("$", hasSize(0));
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"customerEmail":"victim@example.com","subject":"Order","body":"Where is it?"}
+                        """)
+                .post("/tickets")
+                .then().statusCode(201)
+                .body("id", equalTo(1));
+    }
+
+    @Test
     void unknownTicketIs404() {
         given().get("/tickets/999").then().statusCode(404);
     }
